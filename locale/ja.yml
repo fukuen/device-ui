@@ -1,0 +1,169 @@
+ja:
+  Reboot into BaseUI?: BaseUIに変更しますか?
+  no new messages: 新しいメッセージはありません
+  1 of 1 nodes online: "オンラインのノード 1 / 1"
+  uptime 00:00:00: "稼働時間 00:00:00"
+  LoRa 0.0 MHz: ~
+  no signal: 信号なし
+  silent: 静音
+  no SD card detected: SDカードはありません
+  "Heap: 0\nLVGL: 0": "ヒープ: 0\nLVGL: 0"
+  no public key: 公開鍵はありません
+  DEL: 削除
+  map tiles not found!: マップのタイルが見つかりません!
+  Settings: 設定
+  'User name: ': ユーザー名
+  'Modem Preset: LONG FAST': 'モデムプリセット: LONG FAST'
+  'Channel: LongFast': 'チャンネル: LongFast'
+  'Role: Client': 'ロール: Client'
+  'WiFi: <not setup>': 'WiFi: <未設定>'
+  'Screen Timeout: 60s': '画面タイムアウト: 60秒'
+  'Lock: off/off': 'ロック: オフ/オフ'
+  'Screen Brightness: 60%': '画面の輝度: 60%'
+  'Theme: Dark': 'テーマ: ダーク'
+  'Screen Calibration: default': '画面キャリブレーション: デフォルト'
+  'Input Control: none/none': '入力コントロール: なし/なし'
+  'Message Alert Buzzer: on': 'メッセージアラートブザー: オン'
+  'Language: English': '言語: Japanese'
+  Configuration Reset: 設定のリセット
+  Backup & Restore: バックアップと回復
+  Reboot / Shutdown: 再起動 / シャットダウン
+  Tools: ツール
+  Mesh Detector: Mesh検出
+  Signal Scanner: 信号スキャナー
+  Trace Route: トレースルート
+  Neighbors: 近傍ノード
+  Statistics: 統計情報
+  Packet Log: パケットログ
+  Meshtastic: ~
+  Group Channels: グループチャンネル
+  no messages: メッセージはありません
+  Settings & Tools: 設定とツール
+  Settings (advanced): 高度な設定
+  Locations Map: 位置マップ
+  no chats: チャットはありません
+  Node Search: ノード検索
+  Packet Statistics: パケット統計情報
+  Node Options: ノードオプション
+  LoRa TX off!: LoRa送信オフ!
+  Short Name: 短い名前
+  Long Name: 長い名前
+  Primary Channel: 優先チャンネル
+  <unset>: <未設定>
+  Secondary Channels: 副次チャンネル
+  "LONG FAST\nLONG MODERATE\nLONG TURBO\nMEDIUM FAST\nMEDIUM SLOW\nSHORT FAST\nSHORT TURBO\nSHORT SLOW": ~
+  "Client\nClient Mute\nRouter\nRepeater\nTracker\nSensor\nTAK\nClient Hidden\nLost & Found\nTAK Tracker\nRouter Late": ~
+  WiFi SSID: ~
+  WiFi pre-shared Key: WiFi事前共有鍵
+  'Brightness: 60%': '輝度: 60%'
+  "Dark\nLight": "ダーク\nライト"
+  'Timeout: 60s': 'タイムアウト: 60秒'
+  Screen Lock: 画面ロック
+  Settings Lock: 設定ロック
+  Lock PIN: ロックPIN
+  Mouse: マウス
+  none: なし
+  Keyboard: キーボード
+  Message Alert: メッセージアラート
+  Ringtone: 着信音
+  Default: デフォルト
+  Zone: 区域
+  City: 市区町村
+  Backup: バックアップ
+  Restore: 回復
+  Public/Private Key: 公開/秘密鍵
+  "NodeDB Reset\nFactory Reset\nClear Chat History": 'NodeDBリセット\n出荷時リセット\nチャット履歴のクリア'
+  Channel Name: チャンネル名
+  Pre-shared Key: 事前共有鍵
+  Filter: フィルター
+  Unknown: 不明
+  Offline: オフライン
+  Public Key: 公開鍵
+  Channel: チャンネル
+  Hops away: ホップ数
+  MQTT: ~
+  Position: 場所
+  Name: 名前
+  Highlight: ハイライト
+  Active Chat: アクティブなチャット
+  Telemetry: テレメトリー
+  IAQ: ~
+  Start: 開始
+  "choose\nnode": 'ノード\n選択'
+  choose target node: 対象のノードを選択してください
+  "New Message from\n": "新しいメッセージが届きました\n"
+  Restoring messages ...: メッセージの回復中 ...
+  Please set region and name: 地域と名前を設定してください
+  Region: 地域
+  Resync ...: 再同期 ...
+  OK: ~
+  Cancel: キャンセル
+  now: 今
+  'Lock: %s/%s': 'ロック: %s/%s'
+  'on': オン
+  'off': オフ
+  'Screen Calibration: %s': '画面キャリブレーション: %s'
+  done: 完了
+  default: デフォルト
+  "Client\nClient Mute\nTracker\nSensor\nTAK\nClient Hidden\nLost & Found\nTAK Tracker": ~
+  Rebooting ...: 再起動中 ...
+  '>> Programming mode <<': '>> プログラミングモード <<'
+  Enter Text ...: テキストを入力 ...
+  '!Enter Filter ...': '!フィルターを入力 ...'
+  Enter Filter ...: フィルターを入力 ...
+  'FrequencySlot: %d (%g MHz)': ~
+  'Brightness: %d%%': '輝度: %d%%'
+  'Timeout: off': 'タイムアウト: オフ'
+  'Timeout: %ds': 'タイムアウト: %d秒'
+  No map tiles found on SDCard!: マップタイルが見つかりません!
+  Locations Map (%d/%d): 位置マップ (%d/%d)
+  Stop: 停止
+  'heard: !%08x': '最終受信: !%08x'
+  'Packet Log: %d': 'パケットログ: %d'
+  'Language: %s': '言語: %s'
+  'Screen Timeout: off': '画面タイムアウト: オフ'
+  'Screen Timeout: %ds': '画面タイムアウト: %d秒'
+  'Screen Brightness: %d%%': '画面の輝度: %d%%'
+  'Theme: %s': 'テーマ: %s'
+  'Region: %s': '地域: %s'
+  'User name: %s': 'ユーザー名: %s'
+  'Device Role: %s': 'デバイスのロール: %s'
+  'Modem Preset: %s': 'モデムプリセット: %s'
+  'WiFi: %s': 'WiFi: %s'
+  <not set>: '<未設定>'
+  Util %0.1f%%  Air %0.1f%%: '使用率 %0.1f%%  占有率 %0.1f%%'
+  'hops: %d': 'ホップ数: %d'
+  unknown: 不明
+  Connected!: 接続しました!
+  Disconnected!: 切断しました!
+  Shutting down ...: シャットダウン中 ...
+  'Modem Preset: custom': 'モデムプリセット: カスタム'
+  region unset: 地域が設定されていません
+  Banner & Sound: バナーとサウンド
+  Banner only: バナーのみ
+  Sound only: サウンドのみ
+  'Message Alert: %s': 'メッセージアラート: %s'
+  'Channel: %s': 'チャンネル: %s'
+  Failed to write keys!: 鍵の書き込みに失敗しました!
+  Failed to restore keys!: 鍵の回復に失敗しました!
+  Failed to parse keys!: 鍵の解析に失敗しました!
+  Failed to retrieve keys!: 鍵の取得に失敗しました!
+  '%d active chat(s)':
+    one: 'アクティブなチャット %d'
+    other: 'アクティブなチャット %d'
+  "New message from \n%s": '新しいメッセージ: \n%s'
+  'Input Control: %s/%s': '入力コントロール: %s/%s'
+  '%d of %d nodes online':
+    one: 'オンラインのノード %d / %d'
+    other: 'オンラインのノード %d / %d'
+  'Filter: %d of %d nodes': 'フィルター: %d / %d ノード'
+  '%d new message': '新しいメッセージ %d'
+  '%d new messages': '新しいメッセージ %d'
+  'uptime: %02d:%02d:%02d': '稼働時間: %02d:%02d:%02d'
+  "%s: %d GB (%s)\nUsed: %0.2f GB (%d%%)": '%s: %d GB (%s)\n使用: %0.2f GB (%d%%)'
+  SD slot empty: SDスロットは空です
+  SD invalid format: SDのフォーマットが不正です
+  SD mbr not found: SDのmbrが見つかりません
+  SD card error: SDカードエラー
+  SD unknown error: SD不明なエラー
+  "Heap: %d (%d%%)\nLVGL: %d (%d%%)": 'ヒープ: %d (%d%%)\nLVGL: %d (%d%%)'

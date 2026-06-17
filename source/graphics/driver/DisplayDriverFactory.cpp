@@ -81,6 +81,9 @@
 #if defined(HELTEC_V4_TFT) || defined(HELTEC_V4_R8_TFT)
 #include "graphics/LGFX/LGFX_HELTEC_V4_TFT.h"
 #endif
+#ifdef M5STACK_TAB5
+#include "graphics/LGFX/LGFX_M5TAB5.h"
+#endif
 #endif
 
 DisplayDriverFactory::DisplayDriverFactory() {}
@@ -204,6 +207,10 @@ DisplayDriver *DisplayDriverFactory::create(const DisplayDriverConfig &cfg)
 #elif defined(HELTEC_V4_TFT) || defined(HELTEC_V4_R8_TFT)
     case DisplayDriverConfig::device_t::HELTECV4_TFT:
         return new LGFXDriver<LGFX_HELTEC_V4_TFT>(cfg.width(), cfg.height());
+        break;
+#elif defined(M5STACK_TAB5)
+    case DisplayDriverConfig::device_t::CUSTOM_TFT:
+        return new LGFXDriver<LGFX_M5TAB5>(cfg.width(), cfg.height());
         break;
 #endif
 #elif defined(USE_FRAMEBUFFER)
