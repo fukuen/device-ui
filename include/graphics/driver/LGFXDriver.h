@@ -178,9 +178,39 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
 {
     uint32_t w = lv_area_get_width(area);
     uint32_t h = lv_area_get_height(area);
+#if defined(LGFX_ZOOM)
+    lgfx->setColorDepth(16);
+    uint16_t *buf16 = (uint16_t *)px_map; /*Let's say it's a 16 bit (RGB565) display*/
+    int16_t c;
+    int32_t x, y, x0;
+    for (y = area->y1; y <= area->y2; y++)
+    {
+        c = buf16[0];
+        x0 = area->x1;
+        for (x = area->x1; x <= area->x2; x++)
+        {
+            if (c != buf16[0])
+            {
+                lgfx->fillRect(x0 * LGFX_ZOOM, y * LGFX_ZOOM, (x - x0) * LGFX_ZOOM, LGFX_ZOOM, c);
+                c = buf16[0];
+                x0 = x;
+                if (x == area->x2)
+                {
+                    lgfx->fillRect(x * LGFX_ZOOM, y * LGFX_ZOOM, LGFX_ZOOM, LGFX_ZOOM, c);
+                }
+            }
+            else if (x == area->x2)
+            {
+                lgfx->fillRect(x0 * LGFX_ZOOM, y * LGFX_ZOOM, (x - x0 + 1) * LGFX_ZOOM, LGFX_ZOOM, c);
+            }
+            buf16++;
+        }
+    }
+#else
     lv_draw_sw_rgb565_swap(px_map, w * h);
     lgfx->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
     lv_display_flush_ready(disp);
+#endif
 }
 #else
 // Display flushing using DMA
@@ -228,8 +258,13 @@ template <class LGFX> void LGFXDriver<LGFX>::touchpad_read(lv_indev_t *indev_dri
         data->state = LV_INDEV_STATE_REL;
     } else {
         data->state = LV_INDEV_STATE_PR;
+#if defined(LGFX_ZOOM)
+        data->point.x = touchX / LGFX_ZOOM;
+        data->point.y = touchY / LGFX_ZOOM;
+#else
         data->point.x = touchX;
         data->point.y = touchY;
+#endif
 
         // ILOG_DEBUG("Touch(%hd/%hd)", touchX, touchY);
     }
