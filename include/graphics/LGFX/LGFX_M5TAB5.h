@@ -8,7 +8,7 @@
 #include <lgfx/v1/platforms/esp32p4/Panel_ST7123.hpp>
 #include <lgfx/v1/platforms/esp32p4/Touch_ST7123.hpp>
 
-static constexpr int_fast16_t in_i2c_port = I2C_NUM_1;
+static constexpr int_fast16_t in_i2c_port = I2C_NUM_0;
 
 class LGFX_M5TAB5 : public lgfx::LGFX_Device
 {
@@ -257,7 +257,7 @@ public:
             cfg.x_max = 719;
             cfg.y_min = 0;
             cfg.y_max = 1279;
-            cfg.i2c_port = 1;
+            cfg.i2c_port = 0;
             cfg.bus_shared = false;
             cfg.offset_rotation = 0;
             t->config(cfg);
