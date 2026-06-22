@@ -209,8 +209,8 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
 #else
     lv_draw_sw_rgb565_swap(px_map, w * h);
     lgfx->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
-    lv_display_flush_ready(disp);
 #endif
+    lv_display_flush_ready(disp);
 }
 #else
 // Display flushing using DMA
