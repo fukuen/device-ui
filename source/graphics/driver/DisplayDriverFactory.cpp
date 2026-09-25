@@ -36,6 +36,9 @@
 #ifdef T_DECK
 #include "graphics/LGFX/LGFX_T_DECK.h"
 #endif
+#ifdef M5STACK_PAPERMONO
+#include "graphics/LGFX/LGFX_PAPERMONO.h"
+#endif
 #ifdef T_LORA_PAGER
 #include "graphics/LGFX/LGFX_T_LORA_PAGER.h"
 #endif
