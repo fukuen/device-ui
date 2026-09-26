@@ -297,6 +297,9 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush_wait(lv_display_t *)
 #ifndef EPD_FULL_INTERVAL_MS
 #define EPD_FULL_INTERVAL_MS (5 * 60 * 1000)
 #endif
+#ifndef EPD_PARTIAL_MAX_FRAC
+#define EPD_PARTIAL_MAX_FRAC 0.2f
+#endif
 template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 {
     uint32_t w = lv_area_get_width(area);
@@ -305,18 +308,45 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
         ISpiLock::Guard bus;
         lgfx->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
     }
+    // Track the union of the frame's areas so a small change (e.g. the clock) can
+    // be refreshed as a partial differential instead of flashing the whole panel.
+    static bool dirtyValid = false;
+    static int32_t dirtyL = 0, dirtyT = 0, dirtyR = 0, dirtyB = 0;
+    {
+        int32_t x1 = area->x1, y1 = area->y1, x2 = area->x2, y2 = area->y2;
+        if (!dirtyValid) {
+            dirtyL = x1;
+            dirtyT = y1;
+            dirtyR = x2;
+            dirtyB = y2;
+            dirtyValid = true;
+        } else {
+            dirtyL = dirtyL < x1 ? dirtyL : x1;
+            dirtyT = dirtyT < y1 ? dirtyT : y1;
+            dirtyR = dirtyR > x2 ? dirtyR : x2;
+            dirtyB = dirtyB > y2 ? dirtyB : y2;
+        }
+    }
     if (lv_display_flush_is_last(disp)) {
         static uint32_t lastDisplay = 0;
         static uint32_t lastFull = 0;
         uint32_t now = lgfx::millis();
         if (lastDisplay == 0 || (now - lastDisplay) >= EPD_MIN_UPDATE_MS) {
             bool full = (lastDisplay == 0) || (now - lastFull) >= EPD_FULL_INTERVAL_MS;
-            lgfx->setEpdMode(full ? lgfx::epd_mode_t::epd_quality : lgfx::epd_mode_t::epd_fast);
+            if (full || !dirtyValid) {
+                lgfx->setEpdMode(lgfx::epd_mode_t::epd_quality);
+            } else {
+                int32_t dirtyW = dirtyR - dirtyL + 1;
+                int32_t dirtyH = dirtyB - dirtyT + 1;
+                float frac = (float)(dirtyW * dirtyH) / (float)(lgfx->width() * lgfx->height());
+                lgfx->setEpdMode(frac <= EPD_PARTIAL_MAX_FRAC ? lgfx::epd_mode_t::epd_fastest : lgfx::epd_mode_t::epd_fast);
+            }
             lgfx->display();
             lastDisplay = now;
             if (full) {
                 lastFull = now;
             }
+            dirtyValid = false;
         }
     }
     lv_display_flush_ready(disp);

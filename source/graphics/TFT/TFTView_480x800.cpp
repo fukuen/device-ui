@@ -7673,9 +7673,9 @@ void TFTView_480x800::updateTime(void)
     tm *curr_tm = localtime(&curr_time);
     if (VALID_TIME(curr_time) && (unsigned long)objects.home_time_button->user_data == 0 && curr_tm) {
         if (db.config.display.use_12h_clock) {
-            len = strftime(buf, 40, "%I:%M:%S %p\n%a %d-%b-%g", curr_tm);
+            len = strftime(buf, 40, "%I:%M %p\n%a %d-%b-%g", curr_tm);
         } else {
-            len = strftime(buf, 40, "%T %Z%z\n%a %d-%b-%g", curr_tm);
+            len = strftime(buf, 40, "%H:%M %Z%z\n%a %d-%b-%g", curr_tm);
         }
     } else {
         uint32_t uptime = millis() / 1000;
@@ -7686,7 +7686,11 @@ void TFTView_480x800::updateTime(void)
 
         sprintf(&buf[len], _("uptime: %02d:%02d:%02d"), hours, minutes, seconds);
     }
-    lv_label_set_text(objects.home_time_label, buf);
+    // Skip the redraw when the text is unchanged: task_handler ticks every second,
+    // and only the minute boundary should invalidate the clock label on an EPD.
+    if (strcmp(lv_label_get_text(objects.home_time_label), buf) != 0) {
+        lv_label_set_text(objects.home_time_label, buf);
+    }
 }
 
 bool TFTView_480x800::updateSDCard(void)
