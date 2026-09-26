@@ -8,10 +8,33 @@
 // M5Stack PaperMono: 3.97" 4-level grayscale SSD1677 E-Paper, 480x800 portrait.
 // Panel geometry mirrors M5GFX: native landscape 800x480, offset_rotation 3
 // exposes the panel as the 480x800 portrait the UI is laid out for.
+
+// The SSD1677 framebuffer is only ever written over SPI, so it has no DMA
+// requirement. Panel_HasBuffer allocates it from internal RAM by default
+// (96KB for the 4-gray planes); keeping it in PSRAM frees that internal RAM
+// for the MUI/BLE stack.
+class Panel_PaperMonoSSD1677 : public lgfx::Panel_SSD1677_4Gray
+{
+  public:
+    bool init(bool use_reset) override
+    {
+        bool ok = lgfx::Panel_SSD1677_4Gray::init(use_reset);
+        if (ok && _buf) {
+            const size_t len = _get_buffer_length();
+            lgfx::heap_free(_buf);
+            _buf = static_cast<uint8_t *>(lgfx::heap_alloc_psram(len));
+            if (_buf) {
+                memset(_buf, 0xFF, len);
+            }
+        }
+        return ok && _buf;
+    }
+};
+
 class LGFX_PAPERMONO : public lgfx::LGFX_Device
 {
     lgfx::Bus_SPI _bus_instance;
-    lgfx::Panel_SSD1677_4Gray _panel_instance;
+    Panel_PaperMonoSSD1677 _panel_instance;
 
   public:
     const uint32_t screenWidth = 480;
