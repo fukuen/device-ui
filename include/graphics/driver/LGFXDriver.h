@@ -286,6 +286,42 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush_wait(lv_display_t *)
 }
 #else
 // Display flushing not using DMA */
+#ifdef M5STACK_PAPERMONO
+// E-Paper throttled flush: every LVGL area is written into the panel framebuffer,
+// and a single display() pushes the whole frame to the EPD once per LVGL frame.
+// Updates are rate-limited so the slow EPD refresh does not run continuously, with
+// a periodic full-quality refresh to clear accumulated ghosting.
+#ifndef EPD_MIN_UPDATE_MS
+#define EPD_MIN_UPDATE_MS 1500
+#endif
+#ifndef EPD_FULL_INTERVAL_MS
+#define EPD_FULL_INTERVAL_MS (5 * 60 * 1000)
+#endif
+template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
+{
+    uint32_t w = lv_area_get_width(area);
+    uint32_t h = lv_area_get_height(area);
+    {
+        ISpiLock::Guard bus;
+        lgfx->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
+    }
+    if (lv_display_flush_is_last(disp)) {
+        static uint32_t lastDisplay = 0;
+        static uint32_t lastFull = 0;
+        uint32_t now = lgfx::millis();
+        if (lastDisplay == 0 || (now - lastDisplay) >= EPD_MIN_UPDATE_MS) {
+            bool full = (lastDisplay == 0) || (now - lastFull) >= EPD_FULL_INTERVAL_MS;
+            lgfx->setEpdMode(full ? lgfx::epd_mode_t::epd_quality : lgfx::epd_mode_t::epd_fast);
+            lgfx->display();
+            lastDisplay = now;
+            if (full) {
+                lastFull = now;
+            }
+        }
+    }
+    lv_display_flush_ready(disp);
+}
+#else
 template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 {
     uint32_t w = lv_area_get_width(area);
@@ -296,6 +332,7 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
     }
     lv_display_flush_ready(disp);
 }
+#endif
 #endif
 
 #ifdef LGFX_AMOLED_ROUNDER
@@ -443,7 +480,13 @@ template <class LGFX> void LGFXDriver<LGFX>::init_lgfx(void)
         ISpiLock::Guard bus;
         lgfx->init();
         lgfx->setBrightness(defaultBrightness);
+#ifdef M5STACK_PAPERMONO
+        // E-Paper: no automatic display per LVGL area; the throttled flush drives it.
+        lgfx->setAutoDisplay(false);
+        lgfx->setEpdMode(lgfx::epd_mode_t::epd_fast);
+#else
         lgfx->fillScreen(LGFX::color565(0x3D, 0xDA, 0x83));
+#endif
     }
 
     if (hasTouch()) {
