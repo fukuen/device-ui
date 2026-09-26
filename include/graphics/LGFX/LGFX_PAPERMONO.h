@@ -35,6 +35,7 @@ class LGFX_PAPERMONO : public lgfx::LGFX_Device
 {
     lgfx::Bus_SPI _bus_instance;
     Panel_PaperMonoSSD1677 _panel_instance;
+    lgfx::Touch_FT5x06 _touch_instance;
 
   public:
     const uint32_t screenWidth = 480;
@@ -85,6 +86,27 @@ class LGFX_PAPERMONO : public lgfx::LGFX_Device
             _panel_instance.setRotation(0);
         }
 
+        {
+            auto cfg = _touch_instance.config();
+
+            cfg.pin_int = 4;  // TP INT
+            cfg.pin_sda = 47; // I2C_SDA
+            cfg.pin_scl = 48; // I2C_SCL
+            // Share the firmware's I2C_NUM_0 (the PMIC/IOE1 bus) so the pins stay
+            // routed to it; a second port would tear the shared bus away from Wire.
+            cfg.i2c_port = 0;
+            cfg.freq = 400000;
+            cfg.x_min = 0;
+            cfg.x_max = 479;
+            cfg.y_min = 0;
+            cfg.y_max = 799;
+            cfg.offset_rotation = 0;
+            cfg.bus_shared = false;
+
+            _touch_instance.config(cfg);
+        }
+
         setPanel(&_panel_instance);
+        _panel_instance.setTouch(&_touch_instance);
     }
 };
