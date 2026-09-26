@@ -100,7 +100,9 @@ class LGFX_PAPERMONO : public lgfx::LGFX_Device
             cfg.x_max = 479;
             cfg.y_min = 0;
             cfg.y_max = 799;
-            cfg.offset_rotation = 0;
+            // The FT6336 reports in the panel's portrait orientation; offset 0 would
+            // apply the panel's r=3 rotation on top and map the touch 90 degrees off.
+            cfg.offset_rotation = 1;
             cfg.bus_shared = false;
 
             _touch_instance.config(cfg);

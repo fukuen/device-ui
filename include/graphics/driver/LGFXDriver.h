@@ -109,6 +109,7 @@ template <class LGFX> bool LGFXDriver<LGFX>::hasTouch(void)
 
 template <class LGFX> void LGFXDriver<LGFX>::task_handler(void)
 {
+#ifndef M5STACK_PAPERMONO
     // handle display timeout
     if ((screenTimeout > 0 && lv_display_get_inactive_time(lv_display_get_default()) > screenTimeout) || powerSaving ||
         (DisplayDriver::view->isScreenLocked())) {
@@ -209,6 +210,12 @@ template <class LGFX> void LGFXDriver<LGFX>::task_handler(void)
         lgfx->setBrightness(lastBrightness);
         lastBrightness = lgfx->getBrightness();
     }
+#else
+    // E-Paper: the bistable image persists without power and the SSD1677 deep-sleep
+    // wake requires a hardware reset the board does not expose to the display driver
+    // (pin_rst = -1), so a screen-timeout blank/sleep would leave the panel stuck
+    // asleep and unresponsive. Keep the image on and skip the timeout powersave.
+#endif
 
     if (!calibrating) {
         DisplayDriver::task_handler();
