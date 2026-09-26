@@ -6703,9 +6703,9 @@ void TFTView_480x800::updateBluetoothConfig(const meshtastic_Config_BluetoothCon
         ownNode = id;
     }
 
-    if (state <= MeshtasticView::eBootScreenDone && state != MeshtasticView::eWaitingForReboot) {
-        enterProgrammingMode();
-    }
+    // The E-Paper boot phase is slow, so the radio's config sync arrives while the
+    // view is still in the boot state. Auto-entering Programming mode there would
+    // keep the device stuck on that screen; leave it to explicit user interaction.
 }
 
 void TFTView_480x800::updateSecurityConfig(const meshtastic_Config_SecurityConfig &cfg)
