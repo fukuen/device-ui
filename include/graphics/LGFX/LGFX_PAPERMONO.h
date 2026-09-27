@@ -3,6 +3,7 @@
 #define LGFX_USE_V1
 #include "util/ILog.h"
 #include <LovyanGFX.hpp>
+#include <Wire.h>
 #include <lgfx/v1/panel/Panel_SSD1677.hpp>
 
 // M5Stack PaperMono: 3.97" 4-level grayscale SSD1677 E-Paper, 480x800 portrait.
@@ -31,11 +32,47 @@ class Panel_PaperMonoSSD1677 : public lgfx::Panel_SSD1677_4Gray
     }
 };
 
+// FT6336U touch read through the shared IDF Wire bus instead of lgfx::i2c.
+// LovyanGFX's register-level control of I2C_NUM_0 corrupts the IDF i2c_master bus
+// the firmware uses for the M5PM1/M5IOE1, so this driver keeps a single I2C driver
+// (Wire) in control of the shared pins.
+namespace lgfx
+{
+inline namespace v1
+{
+class Touch_FT6x06 : public ITouch
+{
+  public:
+    bool init(void) override { return true; } // Wire is already brought up by the firmware
+    void wakeup(void) override {}
+    void sleep(void) override {}
+    uint_fast8_t getTouchRaw(touch_point_t *tp, uint_fast8_t count) override
+    {
+        if (count == 0) return 0;
+        uint8_t addr = _cfg.i2c_addr;
+        uint8_t data[5];
+        Wire.beginTransmission(addr);
+        Wire.write(0x02);
+        if (Wire.endTransmission(false) != 0) return 0;
+        if (Wire.requestFrom((int)addr, (int)5) != 5) return 0;
+        for (int i = 0; i < 5; i++) data[i] = Wire.read();
+        uint8_t points = data[0] & 0x0F;
+        if (points == 0) return 0;
+        tp[0].id = 0;
+        tp[0].size = 1;
+        tp[0].x = ((data[1] & 0x0F) << 8) | data[2];
+        tp[0].y = ((data[3] & 0x0F) << 8) | data[4];
+        return 1;
+    }
+};
+}
+}
+
 class LGFX_PAPERMONO : public lgfx::LGFX_Device
 {
     lgfx::Bus_SPI _bus_instance;
     Panel_PaperMonoSSD1677 _panel_instance;
-    lgfx::Touch_FT5x06 _touch_instance;
+    lgfx::Touch_FT6x06 _touch_instance;
 
   public:
     const uint32_t screenWidth = 480;
@@ -95,6 +132,7 @@ class LGFX_PAPERMONO : public lgfx::LGFX_Device
             // Share the firmware's I2C_NUM_0 (the PMIC/IOE1 bus) so the pins stay
             // routed to it; a second port would tear the shared bus away from Wire.
             cfg.i2c_port = 0;
+            cfg.i2c_addr = 0x38; // FT6336U
             cfg.freq = 400000;
             cfg.x_min = 0;
             cfg.x_max = 479;
