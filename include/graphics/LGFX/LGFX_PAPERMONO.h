@@ -42,13 +42,38 @@ inline namespace v1
 {
 class Touch_FT6x06 : public ITouch
 {
+  private:
+    bool _flg_released = true; // last INT edge was a release (INT high)
+
   public:
-    bool init(void) override { return true; } // Wire is already brought up by the firmware
+    bool init(void) override
+    {
+        if (_cfg.pin_int >= 0) {
+            lgfx::pinMode(_cfg.pin_int, lgfx::pin_mode_t::input_pullup);
+            // Polling mode: the INT line stays low while a touch is latched, so the
+            // press/release edges in getTouchRaw align with the controller's state.
+            Wire.beginTransmission(_cfg.i2c_addr);
+            Wire.write(0xA4); // FT5x06_INTMODE_REG
+            Wire.write(0x00); // INT Polling mode
+            Wire.endTransmission();
+            _flg_released = true;
+        }
+        return true; // Wire is already brought up by the firmware
+    }
     void wakeup(void) override {}
     void sleep(void) override {}
     uint_fast8_t getTouchRaw(touch_point_t *tp, uint_fast8_t count) override
     {
         if (count == 0) return 0;
+        // Report the point once per press edge: the FT6336 pulls its INT low while a
+        // touch is latched and lets it go after the data is read, so a single PR/REL
+        // pair per tap keeps LVGL's click detection on the first touch.
+        if (_cfg.pin_int >= 0) {
+            if (_flg_released != (bool)digitalRead(_cfg.pin_int)) {
+                _flg_released = !_flg_released;
+            }
+            if (_flg_released) return 0;
+        }
         uint8_t addr = _cfg.i2c_addr;
         uint8_t data[5];
         Wire.beginTransmission(addr);
