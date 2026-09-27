@@ -104,10 +104,10 @@ class LGFX_PAPERMONO : public lgfx::LGFX_Device
     lgfx::Touch_FT6x06 _touch_instance;
 
   public:
-    // LVGL renders at 240x320 (the t-deck portrait layout) and the throttled flush
-    // upscales each area 2x into the panel's 480x800 buffer (content 480x640).
+    // LVGL renders at 240x400 (the portrait view stretched to the panel's 3:5 aspect)
+    // and the throttled flush upscales each area 2x into the panel's 480x800 buffer.
     const uint32_t screenWidth = 240;
-    const uint32_t screenHeight = 320;
+    const uint32_t screenHeight = 400;
 
     bool hasButton(void) { return false; }
 

@@ -331,11 +331,11 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
 {
     uint32_t w = lv_area_get_width(area);
     uint32_t h = lv_area_get_height(area);
-    // LVGL renders at 240x320 (screenWidth/Height); upscale each area 2x into the
-    // panel's 480x800 buffer, content top-aligned at 480x640.
+    // LVGL renders at 240x400 (screenWidth/Height); upscale each area 2x into the
+    // panel's 480x800 buffer (the panel's full aspect).
     static uint16_t *scaled = nullptr;
     if (!scaled) {
-        scaled = (uint16_t *)lgfx::heap_alloc_psram(480 * 640 * sizeof(uint16_t));
+        scaled = (uint16_t *)lgfx::heap_alloc_psram(480 * 800 * sizeof(uint16_t));
     }
     {
         ISpiLock::Guard bus;
@@ -384,13 +384,15 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
         // not be dropped by the rate limit right after a small update, or the new
         // content is written to the panel buffer but never pushed to the EPD.
         bool urgent = dirtyValid && frac > EPD_RATELIMIT_MAX_FRAC;
-        if (lastDisplay == 0 || (now - lastDisplay) >= EPD_MIN_UPDATE_MS || urgent) {
+        // The frontlight is off (idle): keep the panel buffer current but do not push a
+        // refresh, so the static EPD draws no power. The accumulated dirty shows on the
+        // next touch.
+        auto driver = static_cast<LGFXDriver *>(lv_display_get_driver_data(disp));
+        if (!driver->frontlightOff && (lastDisplay == 0 || (now - lastDisplay) >= EPD_MIN_UPDATE_MS || urgent)) {
             bool full = (lastDisplay == 0) || (now - lastFull) >= EPD_FULL_INTERVAL_MS;
-            if (full || !dirtyValid) {
-                lgfx->setEpdMode(lgfx::epd_mode_t::epd_quality);
-            } else {
-                lgfx->setEpdMode(frac <= EPD_PARTIAL_MAX_FRAC ? lgfx::epd_mode_t::epd_fastest : lgfx::epd_mode_t::epd_fast);
-            }
+            // Routine frames all use the fast monochrome differential so scrolling and
+            // dialogs track smoothly; only the periodic quality refresh restores 4-gray.
+            lgfx->setEpdMode(full ? lgfx::epd_mode_t::epd_quality : lgfx::epd_mode_t::epd_fastest);
             lgfx->display();
             lastDisplay = now;
             if (full) {
