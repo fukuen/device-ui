@@ -270,29 +270,10 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
 {
     uint32_t w = lv_area_get_width(area);
     uint32_t h = lv_area_get_height(area);
-    // LVGL renders at 240x320 (screenWidth/Height); upscale each area 2x into the
-    // panel's 480x800 buffer, content top-aligned at 480x640.
-    static uint16_t *scaled = nullptr;
-    if (!scaled) {
-        scaled = (uint16_t *)lgfx::heap_alloc_psram(480 * 640 * sizeof(uint16_t));
-    }
-    {
-        ISpiLock::Guard bus;
-        if (scaled) {
-            for (uint32_t y = 0; y < h; y++) {
-                const uint16_t *src = (const uint16_t *)px_map + (size_t)y * w;
-                uint16_t *dst = scaled + (size_t)(2 * y) * (2 * w);
-                for (uint32_t x = 0; x < w; x++) {
-                    dst[2 * x] = src[x];
-                    dst[2 * x + 1] = src[x];
-                }
-                memcpy(dst + 2 * w, dst, 2 * w * sizeof(uint16_t));
-            }
-            lgfx->pushImage(area->x1 * 2, area->y1 * 2, w * 2, h * 2, scaled);
-        } else {
-            lgfx->pushImage(area->x1 * 2, area->y1 * 2, w * 2, h * 2, (uint16_t *)px_map);
-        }
-    }
+    lgfx->setAddrWindow(area->x1, area->y1, w, h);
+    lgfx->pushPixelsDMA((uint16_t *)px_map, w * h);
+    lv_display_flush_ready(disp);
+}
 #elif defined(USE_FULL_DOUBLE_BUFFER)
 template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 {
@@ -350,9 +331,28 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
 {
     uint32_t w = lv_area_get_width(area);
     uint32_t h = lv_area_get_height(area);
+    // LVGL renders at 240x320 (screenWidth/Height); upscale each area 2x into the
+    // panel's 480x800 buffer, content top-aligned at 480x640.
+    static uint16_t *scaled = nullptr;
+    if (!scaled) {
+        scaled = (uint16_t *)lgfx::heap_alloc_psram(480 * 640 * sizeof(uint16_t));
+    }
     {
         ISpiLock::Guard bus;
-        lgfx->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
+        if (scaled) {
+            for (uint32_t y = 0; y < h; y++) {
+                const uint16_t *src = (const uint16_t *)px_map + (size_t)y * w;
+                uint16_t *dst = scaled + (size_t)(2 * y) * (2 * w);
+                for (uint32_t x = 0; x < w; x++) {
+                    dst[2 * x] = src[x];
+                    dst[2 * x + 1] = src[x];
+                }
+                memcpy(dst + 2 * w, dst, 2 * w * sizeof(uint16_t));
+            }
+            lgfx->pushImage(area->x1 * 2, area->y1 * 2, w * 2, h * 2, scaled);
+        } else {
+            lgfx->pushImage(area->x1 * 2, area->y1 * 2, w * 2, h * 2, (uint16_t *)px_map);
+        }
     }
     // Track the union of the frame's areas so a small change (e.g. the clock) can
     // be refreshed as a partial differential instead of flashing the whole panel.
