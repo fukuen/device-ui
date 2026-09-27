@@ -49,7 +49,9 @@ class Touch_FT6x06 : public ITouch
     bool init(void) override
     {
         if (_cfg.pin_int >= 0) {
-            lgfx::pinMode(_cfg.pin_int, lgfx::pin_mode_t::input_pullup);
+            // Arduino pinMode so the peripheral manager claims GPIO4 and digitalRead
+            // below reports a consistent level instead of warning every tick.
+            ::pinMode(_cfg.pin_int, INPUT_PULLUP);
             // Polling mode: the INT line stays low while a touch is latched, so the
             // press/release edges in getTouchRaw align with the controller's state.
             Wire.beginTransmission(_cfg.i2c_addr);
