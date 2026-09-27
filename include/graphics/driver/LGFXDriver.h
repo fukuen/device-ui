@@ -307,6 +307,9 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush_wait(lv_display_t *)
 #ifndef EPD_PARTIAL_MAX_FRAC
 #define EPD_PARTIAL_MAX_FRAC 0.2f
 #endif
+#ifndef EPD_RATELIMIT_MAX_FRAC
+#define EPD_RATELIMIT_MAX_FRAC 0.05f
+#endif
 template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 {
     uint32_t w = lv_area_get_width(area);
@@ -338,14 +341,18 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
         static uint32_t lastDisplay = 0;
         static uint32_t lastFull = 0;
         uint32_t now = lgfx::millis();
-        if (lastDisplay == 0 || (now - lastDisplay) >= EPD_MIN_UPDATE_MS) {
+        int32_t dirtyW = dirtyValid ? (dirtyR - dirtyL + 1) : 0;
+        int32_t dirtyH = dirtyValid ? (dirtyB - dirtyT + 1) : 0;
+        float frac = (float)(dirtyW * dirtyH) / (float)(lgfx->width() * lgfx->height());
+        // A change bigger than a small partial (a dialog, a screen transition) must
+        // not be dropped by the rate limit right after a small update, or the new
+        // content is written to the panel buffer but never pushed to the EPD.
+        bool urgent = dirtyValid && frac > EPD_RATELIMIT_MAX_FRAC;
+        if (lastDisplay == 0 || (now - lastDisplay) >= EPD_MIN_UPDATE_MS || urgent) {
             bool full = (lastDisplay == 0) || (now - lastFull) >= EPD_FULL_INTERVAL_MS;
             if (full || !dirtyValid) {
                 lgfx->setEpdMode(lgfx::epd_mode_t::epd_quality);
             } else {
-                int32_t dirtyW = dirtyR - dirtyL + 1;
-                int32_t dirtyH = dirtyB - dirtyT + 1;
-                float frac = (float)(dirtyW * dirtyH) / (float)(lgfx->width() * lgfx->height());
                 lgfx->setEpdMode(frac <= EPD_PARTIAL_MAX_FRAC ? lgfx::epd_mode_t::epd_fastest : lgfx::epd_mode_t::epd_fast);
             }
             lgfx->display();
