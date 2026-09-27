@@ -87,8 +87,10 @@ class Touch_FT6x06 : public ITouch
         if (points == 0) return 0;
         tp[0].id = 0;
         tp[0].size = 1;
-        tp[0].x = ((data[1] & 0x0F) << 8) | data[2];
-        tp[0].y = ((data[3] & 0x0F) << 8) | data[4];
+        // The panel reports 480x800 raw coords; LVGL renders at 240x320 with the
+        // flush upscaling 2x, so halve here to keep the touch aligned.
+        tp[0].x = (((data[1] & 0x0F) << 8) | data[2]) >> 1;
+        tp[0].y = (((data[3] & 0x0F) << 8) | data[4]) >> 1;
         return 1;
     }
 };
@@ -102,8 +104,10 @@ class LGFX_PAPERMONO : public lgfx::LGFX_Device
     lgfx::Touch_FT6x06 _touch_instance;
 
   public:
-    const uint32_t screenWidth = 480;
-    const uint32_t screenHeight = 800;
+    // LVGL renders at 240x320 (the t-deck portrait layout) and the throttled flush
+    // upscales each area 2x into the panel's 480x800 buffer (content 480x640).
+    const uint32_t screenWidth = 240;
+    const uint32_t screenHeight = 320;
 
     bool hasButton(void) { return false; }
 

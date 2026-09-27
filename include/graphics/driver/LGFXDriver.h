@@ -27,6 +27,12 @@ constexpr uint32_t defaultTouchReadPeriodMs = 20; // 50Hz
 constexpr uint32_t defaultScreenTimeout = 30 * 1000;
 constexpr uint32_t defaultBrightness = 153;
 
+#ifdef M5STACK_PAPERMONO
+// Weak hook the host firmware overrides to drive the frontlight on/off. The E-Paper
+// keeps its image, only the frontlight times out.
+extern "C" void meshtasticFrontlight(bool on);
+#endif
+
 template <class LGFX> class LGFXDriver : public TFTDriver<LGFX>
 {
   public:
@@ -61,6 +67,9 @@ template <class LGFX> class LGFXDriver : public TFTDriver<LGFX>
     uint32_t lastBrightness;
     bool powerSaving;
     bool forcedWakeup;
+#ifdef M5STACK_PAPERMONO
+    bool frontlightOff = false;
+#endif
 
   private:
     void init_lgfx(void);
@@ -211,10 +220,18 @@ template <class LGFX> void LGFXDriver<LGFX>::task_handler(void)
         lastBrightness = lgfx->getBrightness();
     }
 #else
-    // E-Paper: the bistable image persists without power and the SSD1677 deep-sleep
-    // wake requires a hardware reset the board does not expose to the display driver
-    // (pin_rst = -1), so a screen-timeout blank/sleep would leave the panel stuck
-    // asleep and unresponsive. Keep the image on and skip the timeout powersave.
+    // E-Paper: the bistable image stays on (the SSD1677 deep-sleep wake would need a
+    // hardware reset the board does not expose), but the frontlight still turns off
+    // after the screen timeout and back on at the next touch.
+    uint32_t inactiveMs = lv_display_get_inactive_time(lv_display_get_default());
+    bool idle = screenTimeout > 0 && inactiveMs > screenTimeout;
+    if (idle && !frontlightOff) {
+        frontlightOff = true;
+        meshtasticFrontlight(false);
+    } else if (!idle && frontlightOff) {
+        frontlightOff = false;
+        meshtasticFrontlight(true);
+    }
 #endif
 
     if (!calibrating) {
@@ -253,10 +270,29 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
 {
     uint32_t w = lv_area_get_width(area);
     uint32_t h = lv_area_get_height(area);
-    lgfx->setAddrWindow(area->x1, area->y1, w, h);
-    lgfx->pushPixelsDMA((uint16_t *)px_map, w * h);
-    lv_display_flush_ready(disp);
-}
+    // LVGL renders at 240x320 (screenWidth/Height); upscale each area 2x into the
+    // panel's 480x800 buffer, content top-aligned at 480x640.
+    static uint16_t *scaled = nullptr;
+    if (!scaled) {
+        scaled = (uint16_t *)lgfx::heap_alloc_psram(480 * 640 * sizeof(uint16_t));
+    }
+    {
+        ISpiLock::Guard bus;
+        if (scaled) {
+            for (uint32_t y = 0; y < h; y++) {
+                const uint16_t *src = (const uint16_t *)px_map + (size_t)y * w;
+                uint16_t *dst = scaled + (size_t)(2 * y) * (2 * w);
+                for (uint32_t x = 0; x < w; x++) {
+                    dst[2 * x] = src[x];
+                    dst[2 * x + 1] = src[x];
+                }
+                memcpy(dst + 2 * w, dst, 2 * w * sizeof(uint16_t));
+            }
+            lgfx->pushImage(area->x1 * 2, area->y1 * 2, w * 2, h * 2, scaled);
+        } else {
+            lgfx->pushImage(area->x1 * 2, area->y1 * 2, w * 2, h * 2, (uint16_t *)px_map);
+        }
+    }
 #elif defined(USE_FULL_DOUBLE_BUFFER)
 template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 {
@@ -343,7 +379,7 @@ template <class LGFX> void LGFXDriver<LGFX>::display_flush(lv_display_t *disp, c
         uint32_t now = lgfx::millis();
         int32_t dirtyW = dirtyValid ? (dirtyR - dirtyL + 1) : 0;
         int32_t dirtyH = dirtyValid ? (dirtyB - dirtyT + 1) : 0;
-        float frac = (float)(dirtyW * dirtyH) / (float)(lgfx->width() * lgfx->height());
+        float frac = (float)(dirtyW * dirtyH) / (float)(lgfx->screenWidth * lgfx->screenHeight);
         // A change bigger than a small partial (a dialog, a screen transition) must
         // not be dropped by the rate limit right after a small update, or the new
         // content is written to the panel buffer but never pushed to the EPD.

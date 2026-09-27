@@ -8,6 +8,14 @@
 #include "input/I2CKeyboardInputDriver.h"
 static I2CKeyboardInputDriver *keyboardDriver = nullptr;
 
+#ifdef M5STACK_PAPERMONO
+// Weak default the host firmware overrides (variant.cpp) to drive the frontlight.
+extern "C" __attribute__((weak)) void meshtasticFrontlight(bool on)
+{
+    (void)on;
+}
+#endif
+
 #if LV_USE_LIBINPUT
 #include "input/LinuxInputDriver.h"
 static LinuxInputDriver *linuxInputDriver = nullptr;
